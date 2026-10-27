@@ -1,0 +1,36 @@
+# ─── Backend ───────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+*.ear
+.classpath
+.project
+.settings/
+*.iml
+.idea/
+backend/.mvn/repository
+
+# ─── Frontend / Node.js ────────────────────────
+node_modules/
+dist/
+.angular/
+frontend/.angular/
+frontend/dist/
+server/node_modules/
+
+# ─── Environment / OS ──────────────────────────
+.env
+.DS_Store
+Thumbs.db
+
+# ─── Logs ──────────────────────────────────────
+*.log
+npm-debug.log*
+
+# ─── IDE ───────────────────────────────────────
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln

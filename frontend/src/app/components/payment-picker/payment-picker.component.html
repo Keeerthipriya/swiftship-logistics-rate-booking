@@ -1,0 +1,56 @@
+<div class="payment-card">
+  <div class="card-header">
+    <div class="badge-icon">💳</div>
+    <div>
+      <h3 class="card-title">4. Payment Information</h3>
+      <p class="card-subtitle">Select your payment method (simulated transaction verification).</p>
+    </div>
+  </div>
+
+  <div class="methods-grid">
+    <div
+      class="method-box"
+      [class.active]="selectedMethod() === 'CREDIT_CARD'"
+      (click)="onMethodSelect('CREDIT_CARD')"
+      role="button"
+      tabindex="0"
+    >
+      <div class="method-header">
+        <span class="method-icon">💳</span>
+        <span class="method-name">Credit Card</span>
+      </div>
+      <p class="method-desc">Instant online card authorization.</p>
+    </div>
+
+    <div
+      class="method-box"
+      [class.active]="selectedMethod() === 'CORPORATE_ACCOUNT'"
+      (click)="onMethodSelect('CORPORATE_ACCOUNT')"
+      role="button"
+      tabindex="0"
+    >
+      <div class="method-header">
+        <span class="method-icon">🏢</span>
+        <span class="method-name">Corporate Account</span>
+      </div>
+      <p class="method-desc">Monthly invoiced corporate account billing.</p>
+    </div>
+  </div>
+
+  <div class="form-group reference-group">
+    <label class="form-label">
+      @if (selectedMethod() === 'CREDIT_CARD') {
+        Card Number (Simulated)
+      } @else {
+        Corporate Account ID
+      }
+    </label>
+    <input
+      type="text"
+      [ngModel]="reference()"
+      (ngModelChange)="onReferenceChange($event)"
+      class="form-control"
+      placeholder="e.g. 4111-2222-3333-4444"
+    />
+  </div>
+</div>

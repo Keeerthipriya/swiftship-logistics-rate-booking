@@ -1,0 +1,17 @@
+{
+  "name": "swiftship-node-server",
+  "version": "1.0.0",
+  "description": "Node.js 26.x host for SwiftShip SPA with reverse proxy to Spring Boot backend on port 8080",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "http-proxy-middleware": "^3.0.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

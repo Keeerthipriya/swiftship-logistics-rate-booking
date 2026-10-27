@@ -1,0 +1,61 @@
+<div class="tier-card-container">
+  <div class="card-header">
+    <div class="badge-icon">⚡</div>
+    <div>
+      <h3 class="card-title">2. Select Shipping Speed Tier</h3>
+      <p class="card-subtitle">Choose your desired speed tier. Ineligible tiers are flagged automatically.</p>
+    </div>
+  </div>
+
+  <div class="tier-grid">
+    @for (tier of tiers(); track tier.tier) {
+      <div
+        class="tier-box"
+        [class.selected]="selectedTier() === tier.tier"
+        [class.disabled]="!tier.eligible"
+        (click)="selectTier(tier)"
+        [attr.aria-disabled]="!tier.eligible"
+        tabindex="0"
+        role="button"
+      >
+        <div class="tier-box-top">
+          <div class="tier-name-badge">
+            <span class="tier-name">{{ tier.displayName }}</span>
+            @if (tier.eligible) {
+              <span class="delivery-pill">{{ tier.estimatedDelivery }}</span>
+            } @else {
+              <span class="ineligible-pill">Not Eligible</span>
+            }
+          </div>
+          <div class="radio-indicator">
+            <div class="radio-dot" [class.active]="selectedTier() === tier.tier"></div>
+          </div>
+        </div>
+
+        <p class="tier-desc">{{ tier.description }}</p>
+
+        <div class="tier-pricing-summary">
+          <div class="pricing-col">
+            <span class="pricing-label">Base Fee</span>
+            <span class="pricing-value">\${{ tier.baseFee | number:'1.2-2' }}</span>
+          </div>
+          <div class="pricing-col">
+            <span class="pricing-label">Weight Rate</span>
+            <span class="pricing-value">\${{ tier.perKgRate | number:'1.2-2' }} / kg</span>
+          </div>
+          <div class="pricing-col">
+            <span class="pricing-label">Distance Rate</span>
+            <span class="pricing-value">\${{ tier.perKmRate | number:'1.2-2' }} / km</span>
+          </div>
+        </div>
+
+        @if (!tier.eligible && tier.ineligibilityReason) {
+          <div class="ineligibility-alert">
+            <span class="alert-icon">⚠️</span>
+            <span>{{ tier.ineligibilityReason }}</span>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

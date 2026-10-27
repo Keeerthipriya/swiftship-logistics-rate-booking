@@ -1,0 +1,52 @@
+<div class="summary-container">
+  <div class="summary-header">
+    <div class="badge-icon">🧾</div>
+    <div>
+      <h3 class="card-title">3. Instant Rate Quote</h3>
+      <p class="card-subtitle">Transparent real-time rate calculation based on weight, distance, and tier.</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <span>Calculating rate breakdown...</span>
+    </div>
+  } @else if (quote()) {
+    <div class="quote-content">
+      <div class="fee-rows">
+        <div class="fee-row">
+          <span class="fee-name">Base Shipping Fee</span>
+          <span class="fee-price">\${{ quote()!.baseFee | number:'1.2-2' }}</span>
+        </div>
+        <div class="fee-row">
+          <span class="fee-name">
+            Weight Charge ({{ quote()!.weightKg | number:'1.1-2' }} kg)
+          </span>
+          <span class="fee-price">\${{ quote()!.weightFee | number:'1.2-2' }}</span>
+        </div>
+        <div class="fee-row">
+          <span class="fee-name">
+            Distance Charge ({{ quote()!.distanceKm | number:'1.0-1' }} km)
+          </span>
+          <span class="fee-price">\${{ quote()!.distanceFee | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="total-row">
+        <div class="total-left">
+          <span class="total-label">Total Shipping Cost</span>
+          <span class="delivery-time">Estimated delivery: <strong>{{ quote()!.estimatedDelivery }}</strong></span>
+        </div>
+        <div class="total-amount">
+          \${{ quote()!.totalCost | number:'1.2-2' }}
+          <span class="currency-tag">{{ quote()!.currency }}</span>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="empty-quote">
+      <span>Enter parcel details above to compute your real-time quote.</span>
+    </div>
+  }
+</div>

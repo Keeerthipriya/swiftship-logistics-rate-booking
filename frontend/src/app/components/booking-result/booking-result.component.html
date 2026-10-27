@@ -1,0 +1,50 @@
+<div class="result-card">
+  <div class="success-banner">
+    <div class="success-icon">✓</div>
+    <h2 class="success-title">Parcel Booking Confirmed!</h2>
+    <p class="success-subtitle">Your shipment has been scheduled and simulated payment authorized.</p>
+  </div>
+
+  <div class="tracking-box">
+    <span class="tracking-label">Official Tracking Number</span>
+    <div class="tracking-number">{{ booking().trackingNumber }}</div>
+    <div class="status-pill">{{ booking().status }}</div>
+  </div>
+
+  <div class="details-grid">
+    <div class="detail-block">
+      <span class="detail-heading">Origin & Sender</span>
+      <strong class="detail-name">{{ booking().senderName }}</strong>
+      <p class="detail-addr">Sender</p>
+    </div>
+
+    <div class="detail-block">
+      <span class="detail-heading">Destination & Recipient</span>
+      <strong class="detail-name">{{ booking().recipientName }}</strong>
+      <p class="detail-addr">Recipient</p>
+    </div>
+
+    <div class="detail-block">
+      <span class="detail-heading">Shipment Details</span>
+      <p class="detail-line">Speed: <strong>{{ booking().shippingTier }}</strong></p>
+      <p class="detail-line">Weight: <strong>{{ booking().weightKg }} kg</strong></p>
+      <p class="detail-line">Distance: <strong>{{ booking().distanceKm }} km</strong></p>
+      <p class="detail-line">Delivery: <strong>{{ booking().estimatedDelivery }}</strong></p>
+    </div>
+
+    <div class="detail-block">
+      <span class="detail-heading">Payment Information</span>
+      <p class="detail-line">Method: <strong>{{ booking().paymentMethod }}</strong></p>
+      <p class="detail-line">Txn Ref: <code>{{ booking().paymentTransactionId }}</code></p>
+      <p class="detail-line total-price">
+        Total Paid: <strong>\${{ booking().totalAmount | number:'1.2-2' }} {{ booking().currency }}</strong>
+      </p>
+    </div>
+  </div>
+
+  <div class="action-footer">
+    <button class="btn-reset" (click)="onReset()">
+      Book Another Shipment
+    </button>
+  </div>
+</div>

@@ -1,0 +1,150 @@
+<div class="app-wrapper">
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <span class="brand-logo">🚀</span>
+        <div class="brand-text">
+          <h1 class="brand-title">SwiftShip Logistics</h1>
+          <span class="brand-subtitle">Spec-Driven Dynamic Rate & Booking Engine</span>
+        </div>
+      </div>
+      <div class="system-status">
+        <span class="status-indicator"></span>
+        <span class="status-label">CXF JAX-RS / Angular 20 Engine Live</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Body Content -->
+  <main class="main-container">
+    @if (errorMessage()) {
+      <div class="global-alert">
+        <span class="alert-icon">⚠️</span>
+        <div class="alert-body">
+          <strong class="alert-heading">Notice / Rejection</strong>
+          <p class="alert-message">{{ errorMessage() }}</p>
+        </div>
+      </div>
+    }
+
+    @if (step() === 'BOOKING_FORM') {
+      <div class="workflow-grid">
+        <!-- Left Column: Specs & Tiers -->
+        <div class="workflow-column">
+          <!-- Step 1: Parcel Specs -->
+          <app-parcel-form
+            [initialWeight]="weightKg()"
+            [initialDistance]="distanceKm()"
+            (dimensionsChanged)="onDimensionsChanged($event)"
+          ></app-parcel-form>
+
+          <!-- Step 2: Shipping Tier Selector (OCP) -->
+          <app-tier-selector
+            [tiers]="tiers()"
+            [selectedTier]="selectedTier()"
+            (tierSelected)="onTierSelected($event)"
+          ></app-tier-selector>
+
+          <!-- Contact Addresses -->
+          <div class="address-card">
+            <div class="card-header">
+              <div class="badge-icon">📍</div>
+              <div>
+                <h3 class="card-title">Dispatch & Destination Addresses</h3>
+                <p class="card-subtitle">Required for courier parcel pickup and recipient delivery.</p>
+              </div>
+            </div>
+
+            <div class="address-grid">
+              <div class="address-col">
+                <h4 class="col-title">Sender (Origin)</h4>
+                <div class="form-group">
+                  <label class="form-label">Full Name</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="senderName"
+                    class="form-control"
+                    placeholder="Sender name"
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Pickup Address</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="senderAddress"
+                    class="form-control"
+                    placeholder="Pickup street address"
+                  />
+                </div>
+              </div>
+
+              <div class="address-col">
+                <h4 class="col-title">Recipient (Destination)</h4>
+                <div class="form-group">
+                  <label class="form-label">Full Name</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="recipientName"
+                    class="form-control"
+                    placeholder="Recipient name"
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Delivery Address</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="recipientAddress"
+                    class="form-control"
+                    placeholder="Destination street address"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Quote & Payment -->
+        <div class="workflow-column">
+          <!-- Step 3: Instant Quote Summary (ISP) -->
+          <app-quote-summary
+            [quote]="quote()"
+            [loading]="isLoadingQuote()"
+          ></app-quote-summary>
+
+          <!-- Step 4: Payment Picker -->
+          <app-payment-picker
+            (paymentChanged)="onPaymentChanged($event)"
+          ></app-payment-picker>
+
+          <!-- Submit Booking Action -->
+          <div class="booking-action-card">
+            <button
+              class="btn-submit-booking"
+              (click)="submitBooking()"
+              [disabled]="isSubmittingBooking() || !quote()"
+            >
+              @if (isSubmittingBooking()) {
+                <span class="btn-spinner"></span>
+                <span>Authorizing & Confirming Booking...</span>
+              } @else {
+                <span>Confirm Booking & Schedule Dispatch</span>
+              }
+            </button>
+            <p class="booking-guarantee">
+              🔒 Simulated payment transaction. Booking will be safely recorded in in-memory H2 database.
+            </p>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <!-- Booking Confirmation View -->
+      @if (bookingConfirmation()) {
+        <app-booking-result
+          [booking]="bookingConfirmation()!"
+          (resetRequested)="resetBooking()"
+        ></app-booking-result>
+      }
+    }
+  </main>
+</div>

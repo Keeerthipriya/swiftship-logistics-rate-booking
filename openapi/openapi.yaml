@@ -1,0 +1,442 @@
+openapi: 3.1.0
+info:
+  title: SwiftShip Logistics API
+  description: >
+    Specification for SwiftShip Logistics rate calculation and parcel booking engine.
+    Calculates shipping rates based on weight, distance, and shipping tiers,
+    processes simulated payments, and records parcel bookings.
+  version: 1.0.0
+  contact:
+    name: SwiftShip Logistics Engineering
+    email: api-support@swiftship.io
+
+servers:
+  - url: http://localhost:8080/api
+    description: Local Spring Boot Backend (Apache CXF JAX-RS)
+  - url: http://localhost:3000/api
+    description: Node.js Reverse Proxy Gateway
+
+paths:
+  /quotes:
+    post:
+      summary: Calculate shipping quote
+      description: >
+        Calculates shipping fee breakdown based on parcel weight, distance, and chosen tier.
+        Applies delivery rules and rejects requests violating limits (e.g., Same-Day > 100km).
+      operationId: calculateQuote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuoteRequest'
+      responses:
+        '200':
+          description: Quote calculation successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '400':
+          description: Input validation error (e.g. weight or distance out of bounds)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Business rule violation (e.g. Same-Day delivery requested for distance > 100 km)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tiers:
+    get:
+      summary: List available shipping speed tiers
+      description: Returns all supported shipping tiers, base fees, unit rates, and restrictions.
+      operationId: getShippingTiers
+      parameters:
+        - name: weightKg
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 0.1
+            maximum: 50.0
+          description: Optional parcel weight to filter eligible tiers
+        - name: distanceKm
+          in: query
+          required: false
+          schema:
+            type: number
+            minimum: 1.0
+            maximum: 2500.0
+          description: Optional distance to filter eligible tiers (e.g. excludes Same-Day if > 100km)
+      responses:
+        '200':
+          description: List of shipping tiers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShippingTierInfo'
+
+  /bookings:
+    post:
+      summary: Book a parcel delivery
+      description: >
+        Orchestrates parcel rate calculation, simulates payment authorization,
+        and persists the confirmed booking into the database.
+      operationId: createBooking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookingRequest'
+      responses:
+        '201':
+          description: Parcel booking successfully created and confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          description: Invalid booking parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Business rule or payment authorization rejection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /bookings/{id}:
+    get:
+      summary: Retrieve booking details
+      description: Returns booking and tracking information for an existing booking ID.
+      operationId: getBookingById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Unique booking identifier
+      responses:
+        '200':
+          description: Booking found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ShippingTier:
+      type: string
+      enum:
+        - STANDARD
+        - EXPRESS
+        - SAME_DAY
+      description: >
+        Shipping speed tier:
+        - STANDARD: 3–5 business days, $5.00 base + $1.20/kg + $0.05/km
+        - EXPRESS: Next day, $15.00 base + $2.50/kg + $0.12/km
+        - SAME_DAY: Within 4 hours, $35.00 base + $4.00/kg + $0.25/km (max 100 km)
+
+    PaymentMethod:
+      type: string
+      enum:
+        - CREDIT_CARD
+        - CORPORATE_ACCOUNT
+      description: Accepted customer payment methods
+
+    BookingStatus:
+      type: string
+      enum:
+        - CONFIRMED
+        - CANCELLED
+        - PENDING
+      description: Status of the parcel booking
+
+    QuoteRequest:
+      type: object
+      required:
+        - weightKg
+        - distanceKm
+        - shippingTier
+      properties:
+        weightKg:
+          type: number
+          format: double
+          minimum: 0.1
+          maximum: 50.0
+          description: Parcel weight in kilograms (0.1 - 50.0)
+          example: 4.5
+        distanceKm:
+          type: number
+          format: double
+          minimum: 1.0
+          maximum: 2500.0
+          description: Delivery distance in kilometers (1 - 2500)
+          example: 75.0
+        shippingTier:
+          $ref: '#/components/schemas/ShippingTier'
+
+    QuoteResponse:
+      type: object
+      required:
+        - quoteId
+        - shippingTier
+        - weightKg
+        - distanceKm
+        - baseFee
+        - weightFee
+        - distanceFee
+        - totalCost
+        - currency
+        - estimatedDelivery
+        - createdAt
+      properties:
+        quoteId:
+          type: string
+          format: uuid
+          example: "e6f4a88b-87cf-432d-947f-8be2ebc16823"
+        shippingTier:
+          $ref: '#/components/schemas/ShippingTier'
+        weightKg:
+          type: number
+          format: double
+          example: 4.5
+        distanceKm:
+          type: number
+          format: double
+          example: 75.0
+        baseFee:
+          type: number
+          format: double
+          example: 35.00
+        weightFee:
+          type: number
+          format: double
+          example: 18.00
+        distanceFee:
+          type: number
+          format: double
+          example: 18.75
+        totalCost:
+          type: number
+          format: double
+          example: 71.75
+        currency:
+          type: string
+          example: "USD"
+        estimatedDelivery:
+          type: string
+          example: "Within 4 hours"
+        createdAt:
+          type: string
+          format: date-time
+
+    ShippingTierInfo:
+      type: object
+      required:
+        - tier
+        - displayName
+        - description
+        - baseFee
+        - perKgRate
+        - perKmRate
+        - estimatedDelivery
+        - maxDistanceKm
+        - eligible
+      properties:
+        tier:
+          $ref: '#/components/schemas/ShippingTier'
+        displayName:
+          type: string
+          example: "Same-Day Delivery"
+        description:
+          type: string
+          example: "Immediate courier dispatch within 4 hours (restricted to <= 100km)"
+        baseFee:
+          type: number
+          format: double
+          example: 35.00
+        perKgRate:
+          type: number
+          format: double
+          example: 4.00
+        perKmRate:
+          type: number
+          format: double
+          example: 0.25
+        estimatedDelivery:
+          type: string
+          example: "Within 4 hours"
+        maxDistanceKm:
+          type: number
+          format: double
+          nullable: true
+          example: 100.0
+        eligible:
+          type: boolean
+          example: true
+        ineligibilityReason:
+          type: string
+          nullable: true
+          example: "Same-Day delivery restricted to <= 100 km"
+
+    BookingRequest:
+      type: object
+      required:
+        - senderName
+        - senderAddress
+        - recipientName
+        - recipientAddress
+        - weightKg
+        - distanceKm
+        - shippingTier
+        - paymentMethod
+      properties:
+        senderName:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "Alice Johnson"
+        senderAddress:
+          type: string
+          minLength: 5
+          maxLength: 255
+          example: "124 Market St, Suite 400, San Francisco, CA"
+        recipientName:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "Bob Smith"
+        recipientAddress:
+          type: string
+          minLength: 5
+          maxLength: 255
+          example: "789 Pine Ave, Oakland, CA"
+        weightKg:
+          type: number
+          format: double
+          minimum: 0.1
+          maximum: 50.0
+          example: 3.5
+        distanceKm:
+          type: number
+          format: double
+          minimum: 1.0
+          maximum: 2500.0
+          example: 28.5
+        shippingTier:
+          $ref: '#/components/schemas/ShippingTier'
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethod'
+        paymentReference:
+          type: string
+          nullable: true
+          description: Card last 4 or corporate account reference code
+          example: "CORP-ACCT-98421"
+
+    BookingResponse:
+      type: object
+      required:
+        - bookingId
+        - trackingNumber
+        - status
+        - senderName
+        - recipientName
+        - shippingTier
+        - weightKg
+        - distanceKm
+        - totalAmount
+        - currency
+        - paymentMethod
+        - paymentTransactionId
+        - estimatedDelivery
+        - createdAt
+      properties:
+        bookingId:
+          type: integer
+          format: int64
+          example: 1001
+        trackingNumber:
+          type: string
+          example: "SWIFT-2026-A83F91"
+        status:
+          $ref: '#/components/schemas/BookingStatus'
+        senderName:
+          type: string
+          example: "Alice Johnson"
+        recipientName:
+          type: string
+          example: "Bob Smith"
+        shippingTier:
+          $ref: '#/components/schemas/ShippingTier'
+        weightKg:
+          type: number
+          format: double
+          example: 3.5
+        distanceKm:
+          type: number
+          format: double
+          example: 28.5
+        totalAmount:
+          type: number
+          format: double
+          example: 56.13
+        currency:
+          type: string
+          example: "USD"
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethod'
+        paymentTransactionId:
+          type: string
+          example: "TXN-SIM-78329-CORP"
+        estimatedDelivery:
+          type: string
+          example: "Within 4 hours"
+        createdAt:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required:
+        - errorCode
+        - message
+        - status
+        - timestamp
+      properties:
+        errorCode:
+          type: string
+          example: "TIER_NOT_ELIGIBLE"
+        message:
+          type: string
+          example: "Same-Day delivery is restricted to distances <= 100 km (requested: 150.0 km)"
+        status:
+          type: integer
+          example: 422
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: array
+          items:
+            type: string
+          example: ["distanceKm exceeds maximum allowed of 100 km for tier SAME_DAY"]
